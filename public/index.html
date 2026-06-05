@@ -275,7 +275,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 
 /* STAT CARDS */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
-.stat { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.stat { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; transition: border-color .15s; }
+.stat:hover { border-color: var(--border2); }
+.stat.stat-active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--bg2)); }
 .stat-label { font-size: 11px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; }
 .stat-value { font-size: 26px; font-weight: 600; margin-top: 4px; }
 .stat-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
@@ -525,6 +527,7 @@ let notifList = [];
 let currentUser = null;
 let selectedColor = COLORS[0];
 let regColor = COLORS[0];
+let activeFilter = null;
 
 // ── AUTH UI ──
 function showAuthTab(tab) {
@@ -786,13 +789,20 @@ function renderStats() {
     else if (p.status === 'In approvazione') app++;
     else if (p.status === 'Rifiutata') rej++;
   }));
+  const ac = s => activeFilter === s ? ' stat-active' : '';
   document.getElementById('statsBar').innerHTML = `
-    <div class="stat"><div class="stat-label">App totali</div><div class="stat-value">${total}</div><div class="stat-sub">${data.length} brand</div></div>
-    <div class="stat"><div class="stat-label">Pubblicate</div><div class="stat-value" style="color:var(--green)">${pub}</div></div>
-    <div class="stat"><div class="stat-label">In elaborazione</div><div class="stat-value" style="color:var(--blue)">${proc}</div></div>
-    <div class="stat"><div class="stat-label">In approvazione</div><div class="stat-value" style="color:var(--amber)">${app}</div></div>
-    <div class="stat"><div class="stat-label">Rifiutate</div><div class="stat-value" style="color:var(--red)">${rej}</div></div>
+    <div class="stat${activeFilter === null ? ' stat-active' : ''}" onclick="setStatFilter(null)"><div class="stat-label">App totali</div><div class="stat-value">${total}</div><div class="stat-sub">${data.length} brand</div></div>
+    <div class="stat${ac('Pubblicata')}" onclick="setStatFilter('Pubblicata')"><div class="stat-label">Pubblicate</div><div class="stat-value" style="color:var(--green)">${pub}</div></div>
+    <div class="stat${ac('In elaborazione')}" onclick="setStatFilter('In elaborazione')"><div class="stat-label">In elaborazione</div><div class="stat-value" style="color:var(--blue)">${proc}</div></div>
+    <div class="stat${ac('In approvazione')}" onclick="setStatFilter('In approvazione')"><div class="stat-label">In approvazione</div><div class="stat-value" style="color:var(--amber)">${app}</div></div>
+    <div class="stat${ac('Rifiutate')}" onclick="setStatFilter('Rifiutata')"><div class="stat-label">Rifiutate</div><div class="stat-value" style="color:var(--red)">${rej}</div></div>
   `;
+}
+
+function setStatFilter(status) {
+  activeFilter = status;
+  renderStats();
+  renderGrid();
 }
 
 function getPlatIcon(name) {
@@ -805,10 +815,13 @@ function getPlatIcon(name) {
 
 function renderGrid() {
   const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
-  const filtered = data.filter(b =>
+  let filtered = data.filter(b =>
     b.name.toLowerCase().includes(q) || (b.desc||'').toLowerCase().includes(q) ||
     b.platforms.some(p => p.name.toLowerCase().includes(q) || (p.version||'').toLowerCase().includes(q))
   );
+  if (activeFilter) {
+    filtered = filtered.filter(b => b.platforms.some(p => p.status === activeFilter));
+  }
   const g = document.getElementById('grid');
   if (!filtered.length) {
     g.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>Nessun risultato</p></div>`;
@@ -835,7 +848,7 @@ function renderGrid() {
       <div class="platforms">
         ${!b.platforms.length
           ? `<div style="padding:12px 16px;font-size:12px;color:var(--text3)">Nessuna app — clicca ➕ per aggiungere</div>`
-          : b.platforms.map((p, i) => `
+          : b.platforms.map((p, i) => (activeFilter && p.status !== activeFilter) ? '' : `
           <div class="plat-row" onclick="openPlatformDetail(${b.id},${i})">
             <div class="plat-icon">${getPlatIcon(p.name)}</div>
             <div class="plat-name" title="${p.name}">${p.name}</div>
