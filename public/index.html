@@ -656,7 +656,13 @@ async function api(method, path, body) {
 async function loadData() {
   try {
     const r = await api('GET', '/api/data');
-    data = r?.data?.length ? r.data : defaultData();
+    if (r?.data?.length) {
+      if (r.updated_at) _lastUpdated = r.updated_at;
+      data = r.data;
+    } else {
+      data = defaultData();
+      await saveData();  // persiste i default e aggiorna _lastUpdated tramite la risposta PUT
+    }
     const logs = await api('GET', '/api/changelog');
     changelog = logs || [];
     const notifs = await api('GET', '/api/notifications');
@@ -669,7 +675,8 @@ async function loadData() {
 async function saveData() {
   setSyncStatus('amber', 'salvataggio…');
   try {
-    await api('PUT', '/api/data', { data });
+    const r = await api('PUT', '/api/data', { data });
+    if (r?.updated_at) _lastUpdated = r.updated_at;
     setSyncStatus('green', 'salvato');
   } catch { setSyncStatus('red', 'errore'); }
 }
@@ -898,17 +905,22 @@ function openNewBrand() {
     <div class="field"><label>Descrizione</label><input id="m_desc" placeholder="Breve descrizione"/></div>
     <div class="field"><label>Colore</label>${swatchesHtml(selectedColor)}</div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeModal()">Annulla</button>
-      <button class="btn btn-primary" onclick="saveBrand()">Crea</button>
+      <button type="button" class="btn" onclick="closeModal()">Annulla</button>
+      <button type="button" class="btn btn-primary" onclick="saveBrand()">Crea</button>
     </div>
   </div>`);
 }
 async function saveBrand() {
-  const name = document.getElementById('m_name').value.trim();
-  if (!name) return;
+  const nameEl = document.getElementById('m_name');
+  const name = nameEl?.value.trim();
+  if (!name) {
+    if (nameEl) { nameEl.style.borderColor = 'var(--red)'; nameEl.focus(); }
+    return;
+  }
+  nameEl.style.borderColor = '';
   const init = document.getElementById('m_init').value.trim().toUpperCase() || name.substring(0,2).toUpperCase();
   data.push({ id: Date.now(), name, desc: document.getElementById('m_desc').value.trim(), color: selectedColor, initials: init, platforms: [] });
-  logAction(`ha creato il brand "${name}"`, '');
+  try { logAction(`ha creato il brand "${name}"`, ''); } catch(e) { console.error('logAction error', e); }
   closeModal(); await saveData(); renderAll();
 }
 
@@ -928,18 +940,18 @@ function openEditBrand(id) {
       <div class="app-item">
         <span style="font-size:16px;flex-shrink:0">${getPlatIcon(p.name)}</span>
         <input value="${p.name}" onchange="renameApp(${id},${i},this.value)" placeholder="Nome app"/>
-        <button class="icon-btn" onclick="removeAppInline(${id},${i})" title="Rimuovi">✕</button>
+        <button type="button" class="icon-btn" onclick="removeAppInline(${id},${i})" title="Rimuovi">✕</button>
       </div>`).join('')}</div>
     <div class="add-row">
       <select id="m_newplat">${platOpts('')}</select>
       <input id="m_newcustom" placeholder="oppure nome libero…"/>
-      <button class="btn btn-sm" onclick="addAppInline(${id})">+ Aggiungi</button>
+      <button type="button" class="btn btn-sm" onclick="addAppInline(${id})">+ Aggiungi</button>
     </div>
 
     <div class="modal-actions">
-      <button class="btn btn-danger" onclick="deleteBrand(${id});closeModal()">Elimina brand</button>
-      <button class="btn" onclick="closeModal()">Chiudi</button>
-      <button class="btn btn-primary" onclick="updateBrand(${id})">Salva</button>
+      <button type="button" class="btn btn-danger" onclick="confirmDeleteBrand(${id})">Elimina brand</button>
+      <button type="button" class="btn" onclick="closeModal()">Chiudi</button>
+      <button type="button" class="btn btn-primary" onclick="updateBrand(${id})">Salva</button>
     </div>
   </div>`);
 }
@@ -964,13 +976,14 @@ async function addAppInline(brandId) {
   await saveData(); openEditBrand(brandId);
 }
 async function updateBrand(id) {
-  const b = data.find(x => x.id === id); if (!b) return;
+  const b = data.find(x => x.id === id);
+  if (!b) { console.error('updateBrand: brand non trovato, id =', id); return; }
   const oldName = b.name;
   b.name = document.getElementById('m_name').value.trim() || b.name;
   b.initials = document.getElementById('m_init').value.trim().toUpperCase() || b.initials;
   b.desc = document.getElementById('m_desc').value.trim();
   b.color = selectedColor;
-  logAction(`ha modificato il brand "${oldName}"`, b.name !== oldName ? `rinominato in "${b.name}"` : '');
+  try { logAction(`ha modificato il brand "${oldName}"`, b.name !== oldName ? `rinominato in "${b.name}"` : ''); } catch(e) { console.error('logAction error', e); }
   closeModal(); await saveData(); renderAll();
 }
 async function deleteBrand(id) {
@@ -979,6 +992,15 @@ async function deleteBrand(id) {
   logAction(`ha eliminato il brand "${b?.name}"`, '');
   data = data.filter(x => x.id !== id);
   await saveData(); renderAll();
+}
+async function confirmDeleteBrand(id) {
+  if (!confirm('Eliminare questo brand e tutte le sue app?')) return;
+  const b = data.find(x => x.id === id);
+  logAction(`ha eliminato il brand "${b?.name}"`, '');
+  data = data.filter(x => x.id !== id);
+  closeModal();
+  await saveData();
+  renderAll();
 }
 
 // ── PLATFORM ──
@@ -996,8 +1018,8 @@ function openAddPlatform(brandId) {
     <div class="field"><label>Note</label><textarea id="m_notes" placeholder="Note interne, dettagli review…"></textarea></div>
     <div class="field"><label>Link store / URL</label><input id="m_url" placeholder="https://apps.apple.com/…"/></div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeModal()">Annulla</button>
-      <button class="btn btn-primary" onclick="addPlatform(${brandId})">Aggiungi</button>
+      <button type="button" class="btn" onclick="closeModal()">Annulla</button>
+      <button type="button" class="btn btn-primary" onclick="addPlatform(${brandId})">Aggiungi</button>
     </div>
   </div>`);
 }
@@ -1031,9 +1053,9 @@ function openEditPlatform(brandId, idx) {
     <div class="field"><label>Note</label><textarea id="m_notes">${p.notes||''}</textarea></div>
     <div class="field"><label>Link store / URL</label><input id="m_url" value="${p.storeUrl||''}"/></div>
     <div class="modal-actions">
-      <button class="btn btn-danger" onclick="deletePlatform(${brandId},${idx})">Rimuovi</button>
-      <button class="btn" onclick="closeModal()">Annulla</button>
-      <button class="btn btn-primary" onclick="updatePlatform(${brandId},${idx})">Salva</button>
+      <button type="button" class="btn btn-danger" onclick="deletePlatform(${brandId},${idx})">Rimuovi</button>
+      <button type="button" class="btn" onclick="closeModal()">Annulla</button>
+      <button type="button" class="btn btn-primary" onclick="updatePlatform(${brandId},${idx})">Salva</button>
     </div>
   </div>`);
 }

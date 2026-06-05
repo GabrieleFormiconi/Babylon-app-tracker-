@@ -129,8 +129,11 @@ app.put('/api/data', authMiddleware, async (req, res) => {
   const { data } = req.body;
   if (!Array.isArray(data)) return res.status(400).json({ error: 'Data deve essere un array' });
   try {
-    await pool.query('UPDATE app_data SET data = $1, updated_at = NOW() WHERE id = 1', [JSON.stringify(data)]);
-    res.json({ ok: true });
+    const result = await pool.query(
+      'UPDATE app_data SET data = $1, updated_at = NOW() WHERE id = 1 RETURNING updated_at',
+      [JSON.stringify(data)]
+    );
+    res.json({ ok: true, updated_at: result.rows[0].updated_at });
   } catch (e) { res.status(500).json({ error: 'Errore server' }); }
 });
 
