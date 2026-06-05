@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Babylon App Status Tracker</title>
+<script>if(localStorage.getItem('apptracker_token'))document.documentElement.classList.add('has-token');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -286,6 +287,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 a.store-link { color: var(--accent); font-size: 11px; text-decoration: none; }
 a.store-link:hover { text-decoration: underline; }
 
+/* nasconde login prima del primo paint se il token è presente */
+.has-token #loginScreen { display: none !important; }
+
 /* ── MOBILE ── */
 @media (max-width: 640px) {
   /* login */
@@ -507,8 +511,11 @@ const _autoLoginPromise = (async function() {
       window._autoLoginPayload = JSON.parse(atob(token.split('.')[1]));
     } else {
       localStorage.removeItem('apptracker_token');
+      document.documentElement.classList.remove('has-token');
     }
-  } catch {}
+  } catch {
+    document.documentElement.classList.remove('has-token');
+  }
 })();
 
 const PLATFORM_ICONS = {
