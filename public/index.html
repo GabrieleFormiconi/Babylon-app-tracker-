@@ -283,6 +283,61 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 /* LINK */
 a.store-link { color: var(--accent); font-size: 11px; text-decoration: none; }
 a.store-link:hover { text-decoration: underline; }
+
+/* ── MOBILE ── */
+@media (max-width: 640px) {
+  /* login */
+  .login-box { padding: 2rem 1.25rem; }
+
+  /* topbar */
+  .topbar { padding: 0 14px; gap: 6px; height: 52px; }
+  .topbar-logo { font-size: 14px; }
+  #syncLabel { display: none; }
+  #topUsername { display: none; }
+
+  /* tabs */
+  .tabs { padding: 0 14px; }
+  .tab { padding: 9px 12px; font-size: 12px; }
+
+  /* content */
+  .content { padding: 16px; }
+
+  /* stats — 2 colonne */
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat-value { font-size: 22px; }
+
+  /* toolbar — search su riga intera */
+  .search-wrap { flex: 1 1 100%; }
+
+  /* grid — colonna singola */
+  .grid { grid-template-columns: 1fr; }
+
+  /* brand header */
+  .brand-header { padding: 12px 14px; gap: 10px; }
+  .brand-logo { width: 36px; height: 36px; font-size: 13px; }
+
+  /* platform rows — layout a 2 righe */
+  .plat-row {
+    grid-template-columns: 26px 1fr 34px;
+    grid-template-rows: auto auto auto;
+    row-gap: 4px;
+    align-items: start;
+    padding: 10px 12px;
+  }
+  .plat-icon { grid-column: 1; grid-row: 1; margin-top: 1px; }
+  .plat-name {
+    grid-column: 2; grid-row: 1;
+    white-space: normal; overflow: visible; text-overflow: unset;
+  }
+  .badge { grid-column: 2; grid-row: 2; justify-self: start; }
+  .plat-meta { grid-column: 2; grid-row: 3; flex-wrap: wrap; row-gap: 3px; }
+  .plat-note { max-width: none; }
+  .plat-row > .icon-btn { grid-column: 3; grid-row: 1 / 4; align-self: center; }
+
+  /* modal */
+  .modal { padding: 1.25rem; }
+  .field-row { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
