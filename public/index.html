@@ -496,7 +496,7 @@ a.store-link:hover { text-decoration: underline; }
 <script>
 
 // ── AUTO LOGIN IF TOKEN SAVED ──
-(async function autoLogin() {
+const _autoLoginPromise = (async function() {
   const token = localStorage.getItem('apptracker_token');
   if (!token) return;
   try {
@@ -504,9 +504,7 @@ a.store-link:hover { text-decoration: underline; }
       headers: { 'Authorization': 'Bearer ' + token }
     });
     if (r.ok) {
-      // token valid — decode payload
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      window._autoLoginPayload = payload;
+      window._autoLoginPayload = JSON.parse(atob(token.split('.')[1]));
     } else {
       localStorage.removeItem('apptracker_token');
     }
@@ -670,18 +668,40 @@ function loginSuccess(user) {
   const av = document.getElementById('topAvatar');
   av.textContent = (user.display || user.name)[0].toUpperCase();
   av.style.background = user.color;
+  startInactivityTimer();
   loadData();
 }
 
 // ── CHECK AUTO LOGIN ON LOAD ──
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  await _autoLoginPromise;
   if (window._autoLoginPayload) {
     const p = window._autoLoginPayload;
     loginSuccess({ name: p.username, display: p.display, color: p.color });
   }
 });
 
+// ── INACTIVITY TIMEOUT (15 min) ──
+const INACTIVITY_MS = 15 * 60 * 1000;
+let _inactivityTimer = null;
+function _resetInactivityTimer() {
+  if (!currentUser) return;
+  clearTimeout(_inactivityTimer);
+  _inactivityTimer = setTimeout(logout, INACTIVITY_MS);
+}
+function startInactivityTimer() {
+  ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'].forEach(e =>
+    document.addEventListener(e, _resetInactivityTimer, { passive: true })
+  );
+  _resetInactivityTimer();
+}
+function stopInactivityTimer() {
+  clearTimeout(_inactivityTimer);
+  _inactivityTimer = null;
+}
+
 function logout() {
+  stopInactivityTimer();
   currentUser = null;
   authToken = '';
   localStorage.removeItem('apptracker_token');
