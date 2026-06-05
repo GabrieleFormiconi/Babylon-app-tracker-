@@ -179,11 +179,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .platforms { padding: 8px 0; }
 .plat-row {
   display: grid;
-  grid-template-columns: 26px 112px 130px minmax(180px, 1fr) 32px;
+  grid-template-columns: 26px 160px 130px minmax(180px, 1fr) 32px;
   align-items: center;
   gap: 10px;
   padding: 9px 16px;
-  transition: background .1s; cursor: default;
+  transition: background .1s; cursor: pointer;
 }
 .plat-row:hover { background: var(--bg3); }
 .plat-icon { width: 22px; color: var(--text3); font-size: 15px; }
@@ -781,7 +781,7 @@ function renderGrid() {
         ${!b.platforms.length
           ? `<div style="padding:12px 16px;font-size:12px;color:var(--text3)">Nessuna app — clicca ➕ per aggiungere</div>`
           : b.platforms.map((p, i) => `
-          <div class="plat-row">
+          <div class="plat-row" onclick="openPlatformDetail(${b.id},${i})">
             <div class="plat-icon">${getPlatIcon(p.name)}</div>
             <div class="plat-name" title="${p.name}">${p.name}</div>
             <span class="badge ${STATUS_CLASS[p.status] || 'b-dft'}">${p.status}</span>
@@ -791,7 +791,7 @@ function renderGrid() {
               ${p.storeUrl ? `<a href="${p.storeUrl}" target="_blank" class="store-link" style="white-space:nowrap">🔗 store</a>` : ''}
               ${p.notes ? `<span class="plat-note" title="${p.notes}">💬 ${p.notes}</span>` : ''}
             </div>
-            <button class="icon-btn" onclick="openEditPlatform(${b.id},${i})" title="Modifica">✏️</button>
+            <button type="button" class="icon-btn" onclick="event.stopPropagation();openEditPlatform(${b.id},${i})" title="Modifica">✏️</button>
           </div>`).join('')}
       </div>
     </div>`).join('');
@@ -1048,6 +1048,39 @@ async function addPlatform(brandId) {
   logAction(`ha aggiunto "${name}" a "${b.name}"`, `status: ${status}`);
   pushNotif(`Nuova app aggiunta`, `${b.name} → ${name} (${status})`);
   closeModal(); await saveData(); renderAll();
+}
+
+function openPlatformDetail(brandId, idx) {
+  const b = data.find(x => x.id === brandId); if (!b) return;
+  const p = b.platforms[idx];
+  const sc = STATUS_CLASS[p.status] || 'b-dft';
+  modal(`<div class="modal">
+    <h3 style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:26px;line-height:1">${getPlatIcon(p.name)}</span>
+      <span>${p.name}</span>
+    </h3>
+    <div style="margin-bottom:1.25rem"><span class="badge ${sc}">${p.status}</span></div>
+    <div class="field-row">
+      <div class="field"><label>Versione</label>
+        <div style="padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--mono);font-size:13px">${p.version || '—'}</div>
+      </div>
+      <div class="field"><label>Data</label>
+        <div style="padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px">${p.date || '—'}</div>
+      </div>
+    </div>
+    <div class="field"><label>Note</label>
+      <div style="padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;min-height:64px;white-space:pre-wrap">${p.notes || '—'}</div>
+    </div>
+    <div class="field"><label>Link store</label>
+      <div style="padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;word-break:break-all">
+        ${p.storeUrl ? `<a href="${p.storeUrl}" target="_blank" class="store-link">${p.storeUrl}</a>` : '—'}
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn" onclick="closeModal()">Chiudi</button>
+      <button type="button" class="btn btn-primary" onclick="closeModal();openEditPlatform(${brandId},${idx})">Modifica</button>
+    </div>
+  </div>`);
 }
 
 function openEditPlatform(brandId, idx) {
