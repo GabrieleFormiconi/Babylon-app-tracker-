@@ -179,7 +179,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .platforms { padding: 8px 0; }
 .plat-row {
   display: grid;
-  grid-template-columns: 26px 90px 130px minmax(180px, 1fr) 32px;
+  grid-template-columns: 26px 112px 130px minmax(180px, 1fr) 32px;
   align-items: center;
   gap: 10px;
   padding: 9px 16px;
@@ -759,7 +759,11 @@ function renderGrid() {
         <div class="brand-logo" style="background:${b.color}22;color:${b.color}">${b.initials}</div>
         <div class="brand-info">
           <div class="brand-name">${b.name}</div>
-          <div class="brand-desc">${b.desc || ''}</div>
+          <div class="brand-desc" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+            ${b.platforms.map(p => `<span title="${p.name}" style="font-size:14px;line-height:1">${getPlatIcon(p.name)}</span>`).join('')}
+            ${b.platforms.length && b.desc ? `<span style="color:var(--text3)">·</span>` : ''}
+            ${b.desc ? `<span>${b.desc}</span>` : ''}
+          </div>
         </div>
         <div class="brand-actions">
           <button class="icon-btn" onclick="openEditBrand(${b.id})" title="Impostazioni brand">⚙️</button>
@@ -773,7 +777,7 @@ function renderGrid() {
           : b.platforms.map((p, i) => `
           <div class="plat-row">
             <div class="plat-icon">${getPlatIcon(p.name)}</div>
-            <div class="plat-name">${p.name}</div>
+            <div class="plat-name" title="${p.name}">${p.name}</div>
             <span class="badge ${STATUS_CLASS[p.status] || 'b-dft'}">${p.status}</span>
             <div class="plat-meta">
               <span class="plat-ver">${p.version || '—'}</span>
