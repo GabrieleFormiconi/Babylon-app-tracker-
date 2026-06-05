@@ -740,7 +740,13 @@ function renderStats() {
   `;
 }
 
-function getPlatIcon(name) { return PLATFORM_ICONS[name] || '📱'; }
+function getPlatIcon(name) {
+  const lower = name.toLowerCase();
+  for (const [key, icon] of Object.entries(PLATFORM_ICONS)) {
+    if (lower.includes(key.toLowerCase())) return icon;
+  }
+  return '📱';
+}
 
 function renderGrid() {
   const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
