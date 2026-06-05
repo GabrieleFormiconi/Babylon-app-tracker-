@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>App Status Tracker</title>
+<title>Babylon App Status Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -346,7 +346,7 @@ a.store-link:hover { text-decoration: underline; }
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">🚀</div>
-    <h2>App Status Tracker</h2>
+    <h2>Babylon App Status Tracker</h2>
 
     <!-- TAB SWITCHER -->
     <div style="display:flex;background:var(--bg3);border-radius:var(--radius-sm);padding:3px;gap:3px;margin-bottom:1.5rem">
@@ -1211,7 +1211,7 @@ function exportPDF() {
     .b-rej{color:#991b1b;background:#fee2e2;padding:2px 7px;border-radius:10px;font-size:10px}
   </style>`;
   const scMap = {'Pubblicata':'b-pub','In approvazione':'b-app','In elaborazione':'b-proc','Bozza':'b-dft','Rifiutata':'b-rej'};
-  let html = `${styles}<h1>App Status Tracker</h1><p class="sub">Esportato il ${new Date().toLocaleDateString('it-IT')} da ${currentUser.name}</p>
+  let html = `${styles}<h1>Babylon App Status Tracker</h1><p class="sub">Esportato il ${new Date().toLocaleDateString('it-IT')} da ${currentUser.name}</p>
     <table><tr><th>Piattaforma</th><th>Stato</th><th>Versione</th><th>Data</th><th>Note</th><th>Link Store</th></tr>`;
   data.forEach(b => {
     html += `<tr class="brand-row"><td colspan="6">${b.name}${b.desc ? ` — ${b.desc}` : ''}</td></tr>`;
