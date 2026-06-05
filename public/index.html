@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App Status Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f11;
+  --bg2: #17171a;
+  --bg3: #1e1e22;
+  --bg4: #252529;
+  --border: #2e2e34;
+  --border2: #3a3a42;
+  --text: #f0eff4;
+  --text2: #9896a4;
+  --text3: #5e5c6e;
+  --accent: #7c6fff;
+  --accent2: #5a4fcc;
+  --green: #22c55e; --green-bg: #0d2318; --green-text: #86efac;
+  --amber: #f59e0b; --amber-bg: #271d07; --amber-text: #fcd34d;
+  --blue: #3b82f6;  --blue-bg: #0c1a2e;  --blue-text: #93c5fd;
+  --gray: #6b7280;  --gray-bg: #1a1a1f;  --gray-text: #9ca3af;
+  --red: #ef4444;   --red-bg: #2a0e0e;   --red-text: #fca5a5;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── LOGIN SCREEN ── */
+#loginScreen {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--bg); z-index: 200;
+}
+.login-box {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+  padding: 2.5rem; width: 360px;
+}
+.login-logo {
+  width: 44px; height: 44px; border-radius: 10px; background: var(--accent);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;
+  font-size: 22px;
+}
+.login-box h2 { text-align: center; font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.login-box p { text-align: center; color: var(--text2); font-size: 13px; margin-bottom: 2rem; }
+.login-field { margin-bottom: 14px; }
+.login-field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
+.login-field input {
+  width: 100%; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); font-family: var(--font); font-size: 14px; outline: none;
+  transition: border-color .15s;
+}
+.login-field input:focus { border-color: var(--accent); }
+.btn-login {
+  width: 100%; padding: 11px; background: var(--accent); border: none; border-radius: var(--radius-sm);
+  color: #fff; font-family: var(--font); font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background .15s; margin-top: 4px;
+}
+.btn-login:hover { background: var(--accent2); }
+.pass-wrap { position: relative; }
+.pass-wrap input { padding-right: 40px; }
+.eye-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text3); padding: 0; display: flex; align-items: center; transition: color .15s; }
+.eye-btn:hover { color: var(--text); }
+#loginError { color: var(--red); font-size: 12px; text-align: center; margin-top: 10px; min-height: 18px; }
+.auth-popup {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex;
+  align-items: center; justify-content: center; z-index: 500; padding: 1rem;
+  animation: fadeIn .15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.auth-popup-box {
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: 14px;
+  padding: 1.75rem 1.5rem 1.5rem; width: 100%; max-width: 340px; text-align: center;
+  animation: popIn .2s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.auth-popup-icon { font-size: 36px; margin-bottom: .75rem; }
+.auth-popup-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.auth-popup-msg { font-size: 13px; color: var(--text2); margin-bottom: 1.25rem; line-height: 1.5; }
+.auth-popup-actions { display: flex; gap: 8px; justify-content: center; }
+.auth-popup-actions button { padding: 8px 20px; border-radius: var(--radius-sm); font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border2); background: var(--bg3); color: var(--text); transition: background .15s; }
+.auth-popup-actions button:hover { background: var(--bg4); }
+.auth-popup-actions button.main { background: var(--accent); border-color: var(--accent); color: #fff; }
+.auth-popup-actions button.main:hover { background: var(--accent2); border-color: var(--accent2); }
+
+/* ── LAYOUT ── */
+#app { display: none; min-height: 100vh; }
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px; padding: 0 24px; height: 56px;
+}
+.topbar-logo { font-weight: 600; font-size: 15px; letter-spacing: -.3px; display: flex; align-items: center; gap: 8px; }
+.topbar-logo span { color: var(--accent); }
+.topbar-sep { flex: 1; }
+.topbar-user {
+  display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; cursor: pointer; transition: border-color .15s;
+}
+.topbar-user:hover { border-color: var(--border2); }
+.avatar {
+  width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0;
+}
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+
+/* TABS */
+.tabs { display: flex; gap: 2px; padding: 0 24px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 10px 16px; font-size: 13px; font-weight: 500; color: var(--text2);
+  cursor: pointer; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); border-color: var(--accent); }
+
+.content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+/* TOOLBAR */
+.toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.search-wrap { position: relative; flex: 1; min-width: 200px; }
+.search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: .4; }
+.search-input {
+  width: 100%; padding: 8px 12px 8px 34px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-family: var(--font); font-size: 13px; outline: none;
+  transition: border-color .15s;
+}
+.search-input:focus { border-color: var(--border2); }
+.btn {
+  padding: 8px 16px; border-radius: var(--radius-sm); font-family: var(--font);
+  font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--text); transition: background .15s, border-color .15s;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.btn:hover { background: var(--bg4); border-color: var(--border2); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* GRID */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); gap: 16px; }
+
+.brand-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; transition: border-color .2s;
+}
+.brand-card:hover { border-color: var(--border2); }
+.brand-header {
+  padding: 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-logo {
+  width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; font-size: 15px; font-weight: 700; flex-shrink: 0;
+}
+.brand-info { flex: 1; min-width: 0; }
+.brand-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.brand-actions { display: flex; gap: 4px; }
+.icon-btn {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;
+  background: transparent; color: var(--text2); transition: all .15s;
+}
+.icon-btn:hover { background: var(--bg4); color: var(--text); border-color: var(--border2); }
+
+.platforms { padding: 8px 0; }
+.plat-row {
+  display: grid;
+  grid-template-columns: 26px 90px 130px minmax(180px, 1fr) 32px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  transition: background .1s; cursor: default;
+}
+.plat-row:hover { background: var(--bg3); }
+.plat-icon { width: 22px; color: var(--text3); font-size: 15px; }
+.plat-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge {
+  font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+  letter-spacing: .02em; white-space: nowrap; text-align: center;
+}
+.b-pub  { background: var(--green-bg); color: var(--green-text); }
+.b-app  { background: var(--amber-bg); color: var(--amber-text); }
+.b-proc { background: var(--blue-bg);  color: var(--blue-text); }
+.b-dft  { background: var(--gray-bg);  color: var(--gray-text); }
+.b-rej  { background: var(--red-bg);   color: var(--red-text); }
+
+.plat-meta { display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; }
+.plat-ver { font-family: var(--mono); font-size: 11px; color: var(--text2); white-space: nowrap; flex-shrink: 0; }
+.plat-date { font-size: 11px; color: var(--text3); white-space: nowrap; flex-shrink: 0; }
+.plat-note { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+
+/* MODAL */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex;
+  align-items: center; justify-content: center; z-index: 100; padding: 1rem;
+}
+.modal {
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: 14px;
+  padding: 1.5rem; width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto;
+}
+.modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 1.25rem; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 9px 12px; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); font-family: var(--font); font-size: 13px; outline: none;
+  transition: border-color .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 72px; }
+.field select option { background: var(--bg3); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.btn-danger { background: var(--red-bg); border-color: var(--red-bg); color: var(--red-text); }
+.btn-danger:hover { opacity: .85; }
+
+/* COLORS */
+.swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+.swatch { width: 26px; height: 26px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: transform .1s; }
+.swatch:hover { transform: scale(1.15); }
+.swatch.sel { border-color: #fff; transform: scale(1.1); }
+
+/* APP LIST inline editor */
+.app-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; }
+.app-item input { flex: 1; background: transparent; border: none; color: var(--text); font-family: var(--font); font-size: 13px; outline: none; }
+.add-row { display: flex; gap: 8px; margin-top: 8px; }
+.add-row select, .add-row input { font-size: 13px; padding: 7px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: var(--font); outline: none; }
+.add-row input { flex: 2; }
+
+/* CHANGELOG */
+.log-entry { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.log-entry:last-child { border-bottom: none; }
+.log-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+.log-body { flex: 1; }
+.log-meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.log-detail { font-size: 12px; color: var(--text3); margin-top: 4px; font-family: var(--mono); }
+.log-time { font-size: 11px; color: var(--text3); float: right; }
+.log-empty { text-align: center; padding: 3rem; color: var(--text3); font-size: 14px; }
+
+/* NOTIFICATIONS */
+.notif-banner {
+  position: fixed; top: 66px; right: 20px; z-index: 300;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.notif {
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius);
+  padding: 12px 16px; min-width: 280px; max-width: 340px; pointer-events: all;
+  animation: slideIn .25s ease; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+@keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.notif-title { font-size: 13px; font-weight: 600; }
+.notif-body { font-size: 12px; color: var(--text2); margin-top: 3px; }
+
+/* SECTION HEADER */
+.section-hdr { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
+
+/* EMPTY */
+.empty-state { text-align: center; padding: 4rem; color: var(--text3); }
+.empty-state svg { opacity: .3; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* STAT CARDS */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.stat-label { font-size: 11px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; }
+.stat-value { font-size: 26px; font-weight: 600; margin-top: 4px; }
+.stat-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* LINK */
+a.store-link { color: var(--accent); font-size: 11px; text-decoration: none; }
+a.store-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN / REGISTER -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🚀</div>
+    <h2>App Status Tracker</h2>
+
+    <!-- TAB SWITCHER -->
+    <div style="display:flex;background:var(--bg3);border-radius:var(--radius-sm);padding:3px;gap:3px;margin-bottom:1.5rem">
+      <button id="tabLoginBtn" onclick="showAuthTab('login')" style="flex:1;padding:7px;border:none;border-radius:5px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--text);transition:all .15s">Accedi</button>
+      <button id="tabRegBtn" onclick="showAuthTab('register')" style="flex:1;padding:7px;border:none;border-radius:5px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2);transition:all .15s">Registrati</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="panelLogin">
+      <div class="login-field">
+        <label>Email o username</label>
+        <input id="li_user" type="text" placeholder="nome@azienda.it oppure username" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <div class="pass-wrap">
+          <input id="li_pass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+          <button class="eye-btn" type="button" onclick="toggleEye('li_pass',this)" tabindex="-1" aria-label="Mostra/nascondi password">
+            <svg id="eye_li_pass" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn-login" onclick="doLogin()">Accedi</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="panelRegister" style="display:none">
+      <div class="login-field">
+        <label>Email</label>
+        <input id="reg_email" type="email" placeholder="nome@azienda.it" autocomplete="email" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <div class="login-field">
+        <label>Username <span style="color:var(--text3);font-weight:400">(opzionale)</span></label>
+        <input id="reg_user" type="text" placeholder="lascia vuoto per ricavarlo dalla email" autocomplete="username" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <div class="login-field">
+        <label>Nome completo</label>
+        <input id="reg_display" type="text" placeholder="es. Mario Rossi" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <div class="pass-wrap">
+          <input id="reg_pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()">
+          <button class="eye-btn" type="button" onclick="toggleEye('reg_pass',this)" tabindex="-1" aria-label="Mostra/nascondi password">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="login-field">
+        <label>Conferma password</label>
+        <div class="pass-wrap">
+          <input id="reg_pass2" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()">
+          <button class="eye-btn" type="button" onclick="toggleEye('reg_pass2',this)" tabindex="-1" aria-label="Mostra/nascondi password">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="login-field">
+        <label>Colore avatar</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px" id="regSwatches"></div>
+      </div>
+      <button class="btn-login" onclick="doRegister()">Crea account</button>
+    </div>
+
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">
+      <span>●</span> AppTracker
+    </div>
+    <div style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">in sync</span>
+    </div>
+    <div class="topbar-sep"></div>
+    <div style="position:relative">
+      <div class="topbar-user" onclick="toggleNotifPanel()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="notifCount" style="display:none;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px">0</span>
+      </div>
+      <div id="notifPanel" style="display:none;position:absolute;right:0;top:38px;width:300px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);z-index:200;max-height:350px;overflow-y:auto;">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center">
+          Notifiche <button onclick="clearNotifs()" style="font-size:11px;background:transparent;border:none;color:var(--text3);cursor:pointer">Cancella tutto</button>
+        </div>
+        <div id="notifList"><div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Nessuna notifica</div></div>
+      </div>
+    </div>
+    <div class="topbar-user" id="userChip">
+      <div class="avatar" id="topAvatar" style="background:var(--accent)"></div>
+      <span id="topUsername"></span>
+    </div>
+    <button class="btn btn-sm" onclick="logout()">Esci</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('dashboard',this)">Dashboard</div>
+    <div class="tab" onclick="switchTab('changelog',this)">Storico modifiche</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tabDashboard" class="content">
+    <div class="stats" id="statsBar"></div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search-input" id="searchInput" placeholder="Cerca brand, app, versione…" oninput="renderGrid()">
+      </div>
+      <button class="btn" onclick="exportCSV()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV
+      </button>
+      <button class="btn" onclick="exportPDF()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        PDF
+      </button>
+      <button class="btn btn-primary" onclick="openNewBrand()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuovo brand
+      </button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- CHANGELOG -->
+  <div id="tabChangelog" class="content" style="display:none">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search-input" id="logSearch" placeholder="Cerca nel log…" oninput="renderLog()">
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="clearLog()">Cancella log</button>
+    </div>
+    <div id="logList"></div>
+  </div>
+</div>
+
+<!-- NOTIF BANNERS -->
+<div class="notif-banner" id="notifBanner"></div>
+<div id="modalContainer"></div>
+
+<script>
+
+// ── AUTO LOGIN IF TOKEN SAVED ──
+(async function autoLogin() {
+  const token = localStorage.getItem('apptracker_token');
+  if (!token) return;
+  try {
+    const r = await fetch(window.location.origin + '/api/data', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (r.ok) {
+      // token valid — decode payload
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      window._autoLoginPayload = payload;
+    } else {
+      localStorage.removeItem('apptracker_token');
+    }
+  } catch {}
+})();
+
+const PLATFORM_ICONS = {
+  iOS: '🍎', Android: '🤖', Windows: '🪟', macOS: '💻',
+  Web: '🌐', Linux: '🐧', 'Apple TV': '📺', 'Apple Watch': '⌚'
+};
+const STATUSES = ['Bozza','In elaborazione','In approvazione','Pubblicata','Rifiutata'];
+const STATUS_CLASS = { 'Pubblicata':'b-pub','In approvazione':'b-app','In elaborazione':'b-proc','Bozza':'b-dft','Rifiutata':'b-rej' };
+const COLORS = ['#7c6fff','#22c55e','#f59e0b','#ef4444','#3b82f6','#ec4899','#14b8a6','#f97316','#8b5cf6','#06b6d4'];
+
+let data = [];
+let changelog = [];
+let notifList = [];
+let currentUser = null;
+let selectedColor = COLORS[0];
+let regColor = COLORS[0];
+
+// ── AUTH UI ──
+function showAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('panelLogin').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('panelRegister').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('tabLoginBtn').style.background = isLogin ? 'var(--bg2)' : 'transparent';
+  document.getElementById('tabLoginBtn').style.color = isLogin ? 'var(--text)' : 'var(--text2)';
+  document.getElementById('tabRegBtn').style.background = isLogin ? 'transparent' : 'var(--bg2)';
+  document.getElementById('tabRegBtn').style.color = isLogin ? 'var(--text2)' : 'var(--text)';
+  document.getElementById('loginError').textContent = '';
+  if (!isLogin) buildRegSwatches();
+}
+
+function buildRegSwatches() {
+  const el = document.getElementById('regSwatches');
+  if (!el) return;
+  el.innerHTML = COLORS.map(c =>
+    `<div onclick="regColor='${c}';buildRegSwatches()" style="width:24px;height:24px;border-radius:6px;background:${c};cursor:pointer;border:2px solid ${c===regColor?'#fff':'transparent'};transition:transform .1s" title="${c}"></div>`
+  ).join('');
+}
+
+// ── AUTH POPUP ──
+function showAuthPopup({ icon, title, msg, actions }) {
+  const existing = document.getElementById('authPopup');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.className = 'auth-popup'; div.id = 'authPopup';
+  div.innerHTML = `<div class="auth-popup-box">
+    <div class="auth-popup-icon">${icon}</div>
+    <div class="auth-popup-title">${title}</div>
+    <div class="auth-popup-msg">${msg}</div>
+    <div class="auth-popup-actions">${actions.map(a =>
+      `<button class="${a.main ? 'main' : ''}" onclick="${a.fn}">${a.label}</button>`
+    ).join('')}</div>
+  </div>`;
+  div.addEventListener('click', e => { if (e.target === div) closeAuthPopup(); });
+  document.body.appendChild(div);
+}
+function closeAuthPopup() {
+  const el = document.getElementById('authPopup');
+  if (el) el.remove();
+}
+
+// ── EYE TOGGLE ──
+function toggleEye(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const svg = btn.querySelector('svg');
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  svg.innerHTML = isHidden
+    ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
+    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+}
+
+// ── LOGIN ──
+async function doLogin() {
+  const input = document.getElementById('li_user').value.trim();
+  const pass  = document.getElementById('li_pass').value;
+  const err   = document.getElementById('loginError');
+  if (!input) { err.textContent = 'Inserisci email o username'; return; }
+  if (!pass)  { err.textContent = 'Inserisci la password'; return; }
+  err.textContent = 'Accesso in corso…';
+  err.style.color = 'var(--text2)';
+  try {
+    const r = await fetch(API + '/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login: input, password: pass })
+    });
+    const json = await r.json();
+    if (!r.ok) {
+      err.style.color = 'var(--red)';
+      if (json.error === 'user_not_found') err.textContent = 'Utente non trovato — registrati prima';
+      else if (json.error === 'wrong_password') err.textContent = 'Password non corretta';
+      else err.textContent = json.error || 'Errore accesso';
+      return;
+    }
+    authToken = json.token;
+    localStorage.setItem('apptracker_token', authToken);
+    err.textContent = '';
+    loginSuccess({ name: json.user.username, display: json.user.display, color: json.user.color });
+  } catch {
+    err.style.color = 'var(--red)';
+    err.textContent = 'Errore di rete — riprova';
+  }
+}
+
+// ── REGISTER ──
+async function doRegister() {
+  const email   = document.getElementById('reg_email').value.trim().toLowerCase();
+  const rawUser = document.getElementById('reg_user').value.trim().toLowerCase().replace(/\s+/g,'_');
+  const display = document.getElementById('reg_display').value.trim();
+  const pass    = document.getElementById('reg_pass').value;
+  const pass2   = document.getElementById('reg_pass2').value;
+  const err     = document.getElementById('loginError');
+
+  if (!email) { err.textContent = 'Inserisci la tua email'; err.style.color='var(--red)'; return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = 'Email non valida'; err.style.color='var(--red)'; return; }
+  const username = rawUser || email.split('@')[0].replace(/[^a-z0-9_]/g, '_').substring(0, 20);
+  if (!/^[a-z0-9_]{2,20}$/.test(username)) { err.textContent = 'Username non valido (2-20 car., lettere/numeri/_)'; err.style.color='var(--red)'; return; }
+  if (!pass)          { err.textContent = 'Inserisci una password'; err.style.color='var(--red)'; return; }
+  if (pass.length < 4){ err.textContent = 'Password minimo 4 caratteri'; err.style.color='var(--red)'; return; }
+  if (pass !== pass2) { err.textContent = 'Le password non coincidono'; err.style.color='var(--red)'; return; }
+
+  err.style.color = 'var(--text2)';
+  err.textContent = 'Creazione account…';
+  try {
+    const r = await fetch(API + '/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, username, display_name: display || username, password: pass, color: regColor })
+    });
+    const json = await r.json();
+    if (!r.ok) {
+      err.style.color = 'var(--red)';
+      if (json.error === 'email_exists') {
+        showAuthPopup({ icon: '📧', title: 'Email già registrata', msg: `L'indirizzo <strong>${email}</strong> è già associato a un account. Accedi con la tua password oppure usa un'altra email.`, actions: [{ label: 'Usa altra email', fn: 'closeAuthPopup()', main: false }, { label: 'Vai al login', fn: "closeAuthPopup();showAuthTab('login')", main: true }] });
+      } else if (json.error === 'username_exists') {
+        showAuthPopup({ icon: '👤', title: 'Username già in uso', msg: `L'username <strong>${username}</strong> è già registrato. Scegline un altro oppure accedi.`, actions: [{ label: 'Cambia username', fn: 'closeAuthPopup()', main: false }, { label: 'Vai al login', fn: "closeAuthPopup();showAuthTab('login')", main: true }] });
+      } else { err.textContent = json.error || 'Errore registrazione'; }
+      return;
+    }
+    authToken = json.token;
+    localStorage.setItem('apptracker_token', authToken);
+    err.style.color = 'var(--green)';
+    err.textContent = 'Account creato! Accesso in corso…';
+    setTimeout(() => { err.textContent = ''; loginSuccess({ name: json.user.username, display: json.user.display, color: json.user.color }); }, 800);
+  } catch {
+    err.style.color = 'var(--red)';
+    err.textContent = 'Errore di rete — riprova';
+  }
+}
+
+function loginSuccess(user) {
+  currentUser = user;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('topUsername').textContent = user.display || user.name;
+  const av = document.getElementById('topAvatar');
+  av.textContent = (user.display || user.name)[0].toUpperCase();
+  av.style.background = user.color;
+  loadData();
+}
+
+// ── CHECK AUTO LOGIN ON LOAD ──
+window.addEventListener('DOMContentLoaded', () => {
+  if (window._autoLoginPayload) {
+    const p = window._autoLoginPayload;
+    loginSuccess({ name: p.username, display: p.display, color: p.color });
+  }
+});
+
+function logout() {
+  currentUser = null;
+  authToken = '';
+  localStorage.removeItem('apptracker_token');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('li_user').value = '';
+  document.getElementById('li_pass').value = '';
+  document.getElementById('loginError').textContent = '';
+  showAuthTab('login');
+}
+
+function hashStr(s) { let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return h; }
+
+// ── API HELPERS ──
+const API = window.location.origin;
+let authToken = localStorage.getItem('apptracker_token') || '';
+
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  if (res.status === 401) { logout(); return null; }
+  return res.json();
+}
+
+// ── STORAGE (API) ──
+async function loadData() {
+  try {
+    const r = await api('GET', '/api/data');
+    data = r?.data?.length ? r.data : defaultData();
+    const logs = await api('GET', '/api/changelog');
+    changelog = logs || [];
+    const notifs = await api('GET', '/api/notifications');
+    notifList = notifs || [];
+  } catch { data = defaultData(); changelog = []; notifList = []; }
+  renderAll();
+  setInterval(pollUpdates, 5000);
+}
+
+async function saveData() {
+  setSyncStatus('amber', 'salvataggio…');
+  try {
+    await api('PUT', '/api/data', { data });
+    setSyncStatus('green', 'salvato');
+  } catch { setSyncStatus('red', 'errore'); }
+}
+
+let _lastUpdated = '';
+async function pollUpdates() {
+  try {
+    const r = await api('GET', '/api/data');
+    if (r?.updated_at && r.updated_at !== _lastUpdated) {
+      _lastUpdated = r.updated_at;
+      data = r.data;
+      renderGrid(); renderStats();
+    }
+    const logs = await api('GET', '/api/changelog');
+    if (logs) changelog = logs;
+    const notifs = await api('GET', '/api/notifications');
+    if (notifs) { notifList = notifs; renderNotifCount(); }
+  } catch {}
+}
+
+function setSyncStatus(color, text) {
+  const colors = { green: '#22c55e', amber: '#f59e0b', red: '#ef4444' };
+  document.getElementById('syncDot').style.background = colors[color];
+  document.getElementById('syncLabel').textContent = text;
+}
+
+function defaultData() {
+  return [
+    { id: 1, name: 'Acme Suite', desc: 'Suite produttività', color: '#7c6fff', initials: 'AS', platforms: [
+      { name: 'iOS', status: 'Pubblicata', version: '3.2.1', date: '2025-05-20', notes: '', storeUrl: 'https://apps.apple.com' },
+      { name: 'Android', status: 'Pubblicata', version: '3.2.0', date: '2025-05-18', notes: '', storeUrl: 'https://play.google.com' },
+      { name: 'Windows', status: 'In approvazione', version: '3.3.0-rc1', date: '2025-06-01', notes: 'In attesa review Microsoft', storeUrl: '' },
+      { name: 'macOS', status: 'In elaborazione', version: '3.3.0-beta', date: '2025-06-03', notes: '', storeUrl: '' }
+    ]},
+    { id: 2, name: 'FlowWork', desc: 'Gestione progetti', color: '#22c55e', initials: 'FW', platforms: [
+      { name: 'iOS', status: 'In elaborazione', version: '2.0.0-alpha', date: '2025-06-04', notes: '', storeUrl: '' },
+      { name: 'Android', status: 'Bozza', version: '2.0.0', date: '', notes: '', storeUrl: '' },
+      { name: 'Web', status: 'Pubblicata', version: '2.1.5', date: '2025-04-10', notes: '', storeUrl: 'https://flowwork.app' }
+    ]}
+  ];
+}
+
+// ── RENDER ──
+function renderAll() { renderStats(); renderGrid(); renderLog(); renderNotifCount(); }
+
+function renderStats() {
+  let total = 0, pub = 0, proc = 0, app = 0, rej = 0;
+  data.forEach(b => b.platforms.forEach(p => {
+    total++;
+    if (p.status === 'Pubblicata') pub++;
+    else if (p.status === 'In elaborazione') proc++;
+    else if (p.status === 'In approvazione') app++;
+    else if (p.status === 'Rifiutata') rej++;
+  }));
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat"><div class="stat-label">App totali</div><div class="stat-value">${total}</div><div class="stat-sub">${data.length} brand</div></div>
+    <div class="stat"><div class="stat-label">Pubblicate</div><div class="stat-value" style="color:var(--green)">${pub}</div></div>
+    <div class="stat"><div class="stat-label">In elaborazione</div><div class="stat-value" style="color:var(--blue)">${proc}</div></div>
+    <div class="stat"><div class="stat-label">In approvazione</div><div class="stat-value" style="color:var(--amber)">${app}</div></div>
+    <div class="stat"><div class="stat-label">Rifiutate</div><div class="stat-value" style="color:var(--red)">${rej}</div></div>
+  `;
+}
+
+function getPlatIcon(name) { return PLATFORM_ICONS[name] || '📱'; }
+
+function renderGrid() {
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const filtered = data.filter(b =>
+    b.name.toLowerCase().includes(q) || (b.desc||'').toLowerCase().includes(q) ||
+    b.platforms.some(p => p.name.toLowerCase().includes(q) || (p.version||'').toLowerCase().includes(q))
+  );
+  const g = document.getElementById('grid');
+  if (!filtered.length) {
+    g.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>Nessun risultato</p></div>`;
+    return;
+  }
+  g.innerHTML = filtered.map(b => `
+    <div class="brand-card">
+      <div class="brand-header">
+        <div class="brand-logo" style="background:${b.color}22;color:${b.color}">${b.initials}</div>
+        <div class="brand-info">
+          <div class="brand-name">${b.name}</div>
+          <div class="brand-desc">${b.desc || ''}</div>
+        </div>
+        <div class="brand-actions">
+          <button class="icon-btn" onclick="openEditBrand(${b.id})" title="Impostazioni brand">⚙️</button>
+          <button class="icon-btn" onclick="openAddPlatform(${b.id})" title="Aggiungi app">➕</button>
+          <button class="icon-btn" onclick="deleteBrand(${b.id})" title="Elimina brand">🗑️</button>
+        </div>
+      </div>
+      <div class="platforms">
+        ${!b.platforms.length
+          ? `<div style="padding:12px 16px;font-size:12px;color:var(--text3)">Nessuna app — clicca ➕ per aggiungere</div>`
+          : b.platforms.map((p, i) => `
+          <div class="plat-row">
+            <div class="plat-icon">${getPlatIcon(p.name)}</div>
+            <div class="plat-name">${p.name}</div>
+            <span class="badge ${STATUS_CLASS[p.status] || 'b-dft'}">${p.status}</span>
+            <div class="plat-meta">
+              <span class="plat-ver">${p.version || '—'}</span>
+              <span class="plat-date">${p.date || ''}</span>
+              ${p.storeUrl ? `<a href="${p.storeUrl}" target="_blank" class="store-link" style="white-space:nowrap">🔗 store</a>` : ''}
+              ${p.notes ? `<span class="plat-note" title="${p.notes}">💬 ${p.notes}</span>` : ''}
+            </div>
+            <button class="icon-btn" onclick="openEditPlatform(${b.id},${i})" title="Modifica">✏️</button>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderLog() {
+  const q = (document.getElementById('logSearch')?.value || '').toLowerCase();
+  const entries = q
+    ? changelog.filter(e => JSON.stringify(e).toLowerCase().includes(q))
+    : changelog;
+  const el = document.getElementById('logList');
+  if (!entries.length) {
+    el.innerHTML = `<div class="log-empty">📋 Nessuna modifica registrata</div>`; return;
+  }
+  el.innerHTML = [...entries].reverse().map(e => {
+    const uname = e.username || e.user || '?';
+    const uc = COLORS[Math.abs(hashStr(uname)) % COLORS.length];
+    return `<div class="log-entry">
+      <div class="log-avatar" style="background:${uc}22;color:${uc}">${uname[0].toUpperCase()}</div>
+      <div class="log-body">
+        <div><strong>${uname}</strong> <span class="log-meta">${e.action}</span> <span class="log-time">${formatDate(e.created_at || e.ts)}</span></div>
+        ${e.detail ? `<div class="log-detail">${e.detail}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formatDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleDateString('it-IT') + ' ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── CHANGELOG ──
+function logAction(action, detail) {
+  api('POST', '/api/changelog', { action, detail: detail || '' });
+  changelog.push({ username: currentUser.name, action, detail: detail || '', created_at: new Date().toISOString() });
+}
+
+// ── NOTIFICATIONS ──
+function pushNotif(title, body) {
+  api('POST', '/api/notifications', { title, body });
+  notifList.unshift({ title, body, read: false, created_at: new Date().toISOString() });
+  renderNotifCount();
+  showBanner(title, body);
+  renderNotifPanel();
+}
+function renderNotifCount() {
+  const unread = notifList.filter(n => !n.read).length;
+  const el = document.getElementById('notifCount');
+  el.style.display = unread ? 'inline' : 'none';
+  el.textContent = unread;
+}
+function toggleNotifPanel() {
+  const p = document.getElementById('notifPanel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  notifList.forEach(n => n.read = true);
+  renderNotifCount();
+  renderNotifPanel();
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#notifPanel') && !e.target.closest('.topbar-user')) {
+    document.getElementById('notifPanel').style.display = 'none';
+  }
+});
+function renderNotifPanel() {
+  const el = document.getElementById('notifList');
+  if (!notifList.length) { el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Nessuna notifica</div>`; return; }
+  el.innerHTML = notifList.slice(0,20).map(n => `
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:600">${n.title}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">${n.body}</div>
+    </div>`).join('');
+}
+async function clearNotifs() {
+  notifList = [];
+  renderNotifPanel();
+  renderNotifCount();
+  await api('DELETE', '/api/notifications');
+}
+function showBanner(title, body) {
+  const b = document.createElement('div');
+  b.className = 'notif';
+  b.innerHTML = `<div class="notif-title">${title}</div><div class="notif-body">${body}</div>`;
+  document.getElementById('notifBanner').appendChild(b);
+  setTimeout(() => b.remove(), 4000);
+}
+
+// ── TABS ──
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tabDashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
+  document.getElementById('tabChangelog').style.display = tab === 'changelog' ? 'block' : 'none';
+  if (tab === 'changelog') renderLog();
+}
+
+// ── MODAL HELPERS ──
+function modal(html) { document.getElementById('modalContainer').innerHTML = `<div class="modal-bg" onclick="if(event.target===this)closeModal()">${html}</div>`; }
+function closeModal() { document.getElementById('modalContainer').innerHTML = ''; }
+function statusOpts(sel) { return STATUSES.map(s => `<option${s===sel?' selected':''}>${s}</option>`).join(''); }
+function platOpts(sel) { return Object.keys(PLATFORM_ICONS).map(p => `<option${p===sel?' selected':''}>${p}</option>`).join(''); }
+function swatchesHtml(sel) {
+  return `<div class="swatches" id="swatches">${COLORS.map(c =>
+    `<div class="swatch${c===sel?' sel':''}" style="background:${c}" onclick="selectColor('${c}')"></div>`
+  ).join('')}</div>`;
+}
+function selectColor(c) {
+  selectedColor = c;
+  document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('sel', s.style.background === c || s.style.backgroundColor === c));
+}
+
+// ── BRAND ──
+function openNewBrand() {
+  selectedColor = COLORS[data.length % COLORS.length];
+  modal(`<div class="modal"><h3>Nuovo brand</h3>
+    <div class="field-row">
+      <div class="field"><label>Nome brand</label><input id="m_name" placeholder="es. MyApp"/></div>
+      <div class="field"><label>Sigla (2-3 car.)</label><input id="m_init" maxlength="3" placeholder="MA"/></div>
+    </div>
+    <div class="field"><label>Descrizione</label><input id="m_desc" placeholder="Breve descrizione"/></div>
+    <div class="field"><label>Colore</label>${swatchesHtml(selectedColor)}</div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveBrand()">Crea</button>
+    </div>
+  </div>`);
+}
+async function saveBrand() {
+  const name = document.getElementById('m_name').value.trim();
+  if (!name) return;
+  const init = document.getElementById('m_init').value.trim().toUpperCase() || name.substring(0,2).toUpperCase();
+  data.push({ id: Date.now(), name, desc: document.getElementById('m_desc').value.trim(), color: selectedColor, initials: init, platforms: [] });
+  logAction(`ha creato il brand "${name}"`, '');
+  closeModal(); await saveData(); renderAll();
+}
+
+function openEditBrand(id) {
+  const b = data.find(x => x.id === id); if (!b) return;
+  selectedColor = b.color;
+  modal(`<div class="modal"><h3>Modifica brand — ${b.name}</h3>
+    <div class="field-row">
+      <div class="field"><label>Nome brand</label><input id="m_name" value="${b.name}"/></div>
+      <div class="field"><label>Sigla</label><input id="m_init" maxlength="3" value="${b.initials}"/></div>
+    </div>
+    <div class="field"><label>Descrizione</label><input id="m_desc" value="${b.desc||''}"/></div>
+    <div class="field"><label>Colore</label>${swatchesHtml(b.color)}</div>
+
+    <div class="section-hdr" style="margin-top:1.25rem">App / Piattaforme</div>
+    <div id="appList">${b.platforms.map((p,i) => `
+      <div class="app-item">
+        <span style="font-size:16px;flex-shrink:0">${getPlatIcon(p.name)}</span>
+        <input value="${p.name}" onchange="renameApp(${id},${i},this.value)" placeholder="Nome app"/>
+        <button class="icon-btn" onclick="removeAppInline(${id},${i})" title="Rimuovi">✕</button>
+      </div>`).join('')}</div>
+    <div class="add-row">
+      <select id="m_newplat">${platOpts('')}</select>
+      <input id="m_newcustom" placeholder="oppure nome libero…"/>
+      <button class="btn btn-sm" onclick="addAppInline(${id})">+ Aggiungi</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="deleteBrand(${id});closeModal()">Elimina brand</button>
+      <button class="btn" onclick="closeModal()">Chiudi</button>
+      <button class="btn btn-primary" onclick="updateBrand(${id})">Salva</button>
+    </div>
+  </div>`);
+}
+
+function renameApp(brandId, idx, val) {
+  const b = data.find(x => x.id === brandId); if (!b) return;
+  b.platforms[idx].name = val;
+}
+async function removeAppInline(brandId, idx) {
+  const b = data.find(x => x.id === brandId); if (!b) return;
+  const name = b.platforms[idx].name;
+  b.platforms.splice(idx, 1);
+  logAction(`ha rimosso "${name}" da "${b.name}"`, '');
+  await saveData(); openEditBrand(brandId);
+}
+async function addAppInline(brandId) {
+  const b = data.find(x => x.id === brandId); if (!b) return;
+  const custom = document.getElementById('m_newcustom').value.trim();
+  const name = custom || document.getElementById('m_newplat').value;
+  b.platforms.push({ name, status: 'Bozza', version: '', date: '', notes: '', storeUrl: '' });
+  logAction(`ha aggiunto "${name}" a "${b.name}"`, 'status: Bozza');
+  await saveData(); openEditBrand(brandId);
+}
+async function updateBrand(id) {
+  const b = data.find(x => x.id === id); if (!b) return;
+  const oldName = b.name;
+  b.name = document.getElementById('m_name').value.trim() || b.name;
+  b.initials = document.getElementById('m_init').value.trim().toUpperCase() || b.initials;
+  b.desc = document.getElementById('m_desc').value.trim();
+  b.color = selectedColor;
+  logAction(`ha modificato il brand "${oldName}"`, b.name !== oldName ? `rinominato in "${b.name}"` : '');
+  closeModal(); await saveData(); renderAll();
+}
+async function deleteBrand(id) {
+  if (!confirm('Eliminare questo brand e tutte le sue app?')) return;
+  const b = data.find(x => x.id === id);
+  logAction(`ha eliminato il brand "${b?.name}"`, '');
+  data = data.filter(x => x.id !== id);
+  await saveData(); renderAll();
+}
+
+// ── PLATFORM ──
+function openAddPlatform(brandId) {
+  modal(`<div class="modal"><h3>Aggiungi app</h3>
+    <div class="field-row">
+      <div class="field"><label>Piattaforma</label><select id="m_plat">${platOpts('')}</select></div>
+      <div class="field"><label>Nome libero</label><input id="m_custom" placeholder="es. Apple TV"/></div>
+    </div>
+    <div class="field"><label>Stato</label><select id="m_status">${statusOpts('Bozza')}</select></div>
+    <div class="field-row">
+      <div class="field"><label>Versione</label><input id="m_ver" placeholder="1.0.0"/></div>
+      <div class="field"><label>Data</label><input id="m_date" type="date"/></div>
+    </div>
+    <div class="field"><label>Note</label><textarea id="m_notes" placeholder="Note interne, dettagli review…"></textarea></div>
+    <div class="field"><label>Link store / URL</label><input id="m_url" placeholder="https://apps.apple.com/…"/></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="addPlatform(${brandId})">Aggiungi</button>
+    </div>
+  </div>`);
+}
+async function addPlatform(brandId) {
+  const b = data.find(x => x.id === brandId); if (!b) return;
+  const custom = document.getElementById('m_custom').value.trim();
+  const name = custom || document.getElementById('m_plat').value;
+  const status = document.getElementById('m_status').value;
+  b.platforms.push({
+    name, status,
+    version: document.getElementById('m_ver').value.trim(),
+    date: document.getElementById('m_date').value,
+    notes: document.getElementById('m_notes').value.trim(),
+    storeUrl: document.getElementById('m_url').value.trim()
+  });
+  logAction(`ha aggiunto "${name}" a "${b.name}"`, `status: ${status}`);
+  pushNotif(`Nuova app aggiunta`, `${b.name} → ${name} (${status})`);
+  closeModal(); await saveData(); renderAll();
+}
+
+function openEditPlatform(brandId, idx) {
+  const b = data.find(x => x.id === brandId); if (!b) return;
+  const p = b.platforms[idx];
+  modal(`<div class="modal"><h3>${b.name} — ${p.name}</h3>
+    <div class="field"><label>Nome app</label><input id="m_pname" value="${p.name}"/></div>
+    <div class="field"><label>Stato</label><select id="m_status">${statusOpts(p.status)}</select></div>
+    <div class="field-row">
+      <div class="field"><label>Versione</label><input id="m_ver" value="${p.version||''}"/></div>
+      <div class="field"><label>Data</label><input id="m_date" type="date" value="${p.date||''}"/></div>
+    </div>
+    <div class="field"><label>Note</label><textarea id="m_notes">${p.notes||''}</textarea></div>
+    <div class="field"><label>Link store / URL</label><input id="m_url" value="${p.storeUrl||''}"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="deletePlatform(${brandId},${idx})">Rimuovi</button>
+      <button class="btn" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="updatePlatform(${brandId},${idx})">Salva</button>
+    </div>
+  </div>`);
+}
+async function updatePlatform(brandId, idx) {
+  const b = data.find(x => x.id === brandId); if (!b) return;
+  const p = b.platforms[idx];
+  const oldStatus = p.status;
+  const oldVer = p.version;
+  p.name = document.getElementById('m_pname').value.trim() || p.name;
+  p.status = document.getElementById('m_status').value;
+  p.version = document.getElementById('m_ver').value.trim();
+  p.date = document.getElementById('m_date').value;
+  p.notes = document.getElementById('m_notes').value.trim();
+  p.storeUrl = document.getElementById('m_url').value.trim();
+
+  let details = [];
+  if (p.status !== oldStatus) details.push(`stato: ${oldStatus} → ${p.status}`);
+  if (p.version !== oldVer) details.push(`versione: ${oldVer||'—'} → ${p.version||'—'}`);
+
+  logAction(`ha modificato "${p.name}" in "${b.name}"`, details.join(' | '));
+  if (p.status !== oldStatus) pushNotif(`Stato aggiornato`, `${b.name} → ${p.name}: ${oldStatus} → ${p.status}`);
+
+  closeModal(); await saveData(); renderAll();
+}
+async function deletePlatform(brandId, idx) {
+  const b = data.find(x => x.id === brandId); if (!b) return;
+  const name = b.platforms[idx].name;
+  b.platforms.splice(idx, 1);
+  logAction(`ha rimosso "${name}" da "${b.name}"`, '');
+  closeModal(); await saveData(); renderAll();
+}
+
+// ── EXPORT ──
+function exportCSV() {
+  const rows = [['Brand','Descrizione','Piattaforma','Stato','Versione','Data','Note','Link Store']];
+  data.forEach(b => b.platforms.forEach(p =>
+    rows.push([b.name, b.desc||'', p.name, p.status, p.version||'', p.date||'', (p.notes||'').replace(/,/g,' '), p.storeUrl||''])
+  ));
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  download('app-tracker.csv', 'text/csv', csv);
+}
+
+function exportPDF() {
+  const styles = `<style>
+    body{font-family:sans-serif;font-size:12px;color:#111;padding:20px}
+    h1{font-size:18px;margin-bottom:4px}p.sub{color:#666;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#f0f0f5;text-align:left;padding:7px 10px;font-size:11px;border:1px solid #ddd}
+    td{padding:6px 10px;border:1px solid #eee;vertical-align:top}
+    .brand-row td{background:#f9f9fb;font-weight:600}
+    .b-pub{color:#166534;background:#dcfce7;padding:2px 7px;border-radius:10px;font-size:10px}
+    .b-app{color:#92400e;background:#fef3c7;padding:2px 7px;border-radius:10px;font-size:10px}
+    .b-proc{color:#1e40af;background:#dbeafe;padding:2px 7px;border-radius:10px;font-size:10px}
+    .b-dft{color:#4b5563;background:#f3f4f6;padding:2px 7px;border-radius:10px;font-size:10px}
+    .b-rej{color:#991b1b;background:#fee2e2;padding:2px 7px;border-radius:10px;font-size:10px}
+  </style>`;
+  const scMap = {'Pubblicata':'b-pub','In approvazione':'b-app','In elaborazione':'b-proc','Bozza':'b-dft','Rifiutata':'b-rej'};
+  let html = `${styles}<h1>App Status Tracker</h1><p class="sub">Esportato il ${new Date().toLocaleDateString('it-IT')} da ${currentUser.name}</p>
+    <table><tr><th>Piattaforma</th><th>Stato</th><th>Versione</th><th>Data</th><th>Note</th><th>Link Store</th></tr>`;
+  data.forEach(b => {
+    html += `<tr class="brand-row"><td colspan="6">${b.name}${b.desc ? ` — ${b.desc}` : ''}</td></tr>`;
+    b.platforms.forEach(p => {
+      html += `<tr><td>${p.name}</td><td><span class="${scMap[p.status]||'b-dft'}">${p.status}</span></td>
+        <td style="font-family:monospace">${p.version||'—'}</td><td>${p.date||'—'}</td>
+        <td>${p.notes||''}</td><td>${p.storeUrl ? `<a href="${p.storeUrl}">${p.storeUrl}</a>` : ''}</td></tr>`;
+    });
+  });
+  html += '</table>';
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  w.print();
+}
+
+function download(filename, mime, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+  a.download = filename; a.click();
+}
+
+async function clearLog() {
+  if (!confirm('Cancellare tutto lo storico modifiche?')) return;
+  changelog = [];
+  await api('DELETE', '/api/changelog');
+  renderLog();
+}
+</script>
+</body>
+</html>
